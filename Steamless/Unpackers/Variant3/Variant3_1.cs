@@ -243,8 +243,8 @@ namespace Steamless.Unpackers.Variant3
 
                 Program.Output("  --> .bind section was removed!", ConsoleOutputType.Info);
             }
-
-            Program.Output("  --> .bind section was kept!", ConsoleOutputType.Info);
+            else
+                Program.Output("  --> .bind section was kept!", ConsoleOutputType.Info);
 
             // Find the code section..
             var codeSection = this.File.GetOwnerSection(this.StubHeader.CodeSectionVirtualAddress);
