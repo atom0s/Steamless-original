@@ -45,36 +45,47 @@ namespace Steamless.Unpackers
             // Try and determine the packer version used..
             var bindSection = file.GetSectionData(".bind");
             var offset = Pe32Helpers.FindPattern(bindSection, "55 8B EC 81 EC ?? ?? ?? ?? 53 ?? ?? ?? ?? ?? 68");
+            var drmHeaderSize = 0;
 
             if (offset == 0)
             {
-                // Todo: Manually attempt each version of the variant 3 unpackers..
-                Program.Output("Could not determine the variant version to unpack with!", ConsoleOutputType.Error);
-                return false;
+                // Try again with the last two instructions flipped..
+                offset = Pe32Helpers.FindPattern(bindSection, "55 8B EC 81 EC ?? ?? ?? ?? 53 ?? ?? ?? ?? ?? 8D 83");
+                if (offset == 0)
+                {
+                    // Todo: Manually attempt each version of the variant 3 unpackers..
+                    Program.Output("Could not determine the variant version to unpack with!", ConsoleOutputType.Error);
+                    return false;
+                }
+                else
+                {
+                    // Obtain the DRM header size..
+                    drmHeaderSize = BitConverter.ToInt32(bindSection, (int)offset + 22);
+                }
+            }
+            else
+            {
+                // Obtain the DRM header size..
+                drmHeaderSize = BitConverter.ToInt32(bindSection, (int)offset + 16);
             }
 
-            // Obtain the DRM header size from the initial memcpy call..
-            var drmHeaderSize = BitConverter.ToInt32(bindSection, (int)offset + 16);
 
             // Attempt to handle the given DRM header size..
             switch (drmHeaderSize)
             {
-
+                //
                 // Variant Version v3.0.0 (?)
-                // Known Usages:
-                //      -> The Wolf Amoung Us
-                case 0xB0:
-                    return false;
+                //
+                case 0xB0: // Older version of v3.0.0
+                case 0xD0: // Newer version of v3.0.0
+                    {
+                        var unpacker = new Variant3_0();
+                        return unpacker.Process(file);
+                    }
 
-                // Variant Version v3.0.0 (?)
-                // Known Usages:
-                //      -> Grim Dawn (pre b30)
-                case 0xD0:
-                    return false;
-
+                //
                 // Variant Version v3.0.1 (?)
-                // Known Usages
-                //      -> Grim Dawn (post b30)
+                //
                 case 0xF0:
                     {
                         var unpacker = new Variant3_1();

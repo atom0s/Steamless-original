@@ -94,6 +94,7 @@ namespace Steamless.Unpackers.Variant3
         {
             // Store the file object for later usage..
             this.File = file;
+            this.CodeSectionIndex = -1;
 
             // Announce the packer version being used..
             Program.Output("File is packed with SteamStub Variant #3.1!\n", ConsoleOutputType.Success);
@@ -245,6 +246,10 @@ namespace Steamless.Unpackers.Variant3
             }
             else
                 Program.Output("  --> .bind section was kept!", ConsoleOutputType.Info);
+
+            // Skip finding the code section if we are not encrypted..
+            if ((this.StubHeader.Flags & (uint)DrmFlags.NoEncryption) == (uint)DrmFlags.NoEncryption)
+                return true;
 
             // Find the code section..
             var codeSection = this.File.GetOwnerSection(this.StubHeader.CodeSectionVirtualAddress);
